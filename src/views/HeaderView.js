@@ -17,17 +17,18 @@ export class HeaderView {
             <a href="#/">Dicoding Story</a>
           </h1>
           <nav class="space-x-4">
+            <button id="toggleNotifBtn" class="hover:bg-blue-500 p-2 rounded-md">Aktifkan Notifikasi</button>
             ${
               isAuthenticated
                 ? `
-              <a href="#/" class="hover:bg-blue-500 p-2 rounded-md">Cerita</a>
-              <a href="#/add" class="hover:bg-blue-500 p-2 rounded-md">Tambah Cerita</a>
-              <button id="logoutBtn" class="hover:bg-blue-500 p-2 rounded-md">Logout</button>
-            `
+                <a href="#/" class="hover:bg-blue-500 p-2 rounded-md">Cerita</a>
+                <a href="#/add" class="hover:bg-blue-500 p-2 rounded-md">Tambah Cerita</a>
+                <button id="logoutBtn" class="hover:bg-blue-500 p-2 rounded-md">Logout</button>
+              `
                 : `
-              <a href="#/login" class="hover:bg-blue-500 p-2 rounded-md">Login</a>
-              <a href="#/register" class="hover:bg-blue-500 p-2 rounded-md">Register</a>
-            `
+                <a href="#/login" class="hover:bg-blue-500 p-2 rounded-md">Login</a>
+                <a href="#/register" class="hover:bg-blue-500 p-2 rounded-md">Register</a>
+              `
             }
           </nav>
         </div>
@@ -67,4 +68,22 @@ export class HeaderView {
   notifyAuthChanged() {
     window.dispatchEvent(new Event("authChanged"));
   }
+
+  bindNotificationToggle(handler) {
+    const toggleBtn = this.root.querySelector("#toggleNotifBtn");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        handler();
+      });
+    }
+  }
+
+  updateNotifButtonState(isEnabled) {
+    const btn = this.root.querySelector("#toggleNotifBtn");
+    if (btn) {
+      btn.textContent = isEnabled ? "Nonaktifkan Notifikasi" : "Aktifkan Notifikasi";
+    }
+  }
 }
+
+export default HeaderView;
