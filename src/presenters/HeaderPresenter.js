@@ -1,92 +1,3 @@
-// import AuthModel from "../models/AuthModel.js";
-
-// export class HeaderPresenter {
-//   constructor(view) {
-//    this.view = view;
-//   this.model = new AuthModel();
-//   this.notifEnabled = false;
-
-//   this.view.bindLogout(this.handleLogout.bind(this));
-//   this.view.bindSkipLink();
-//   this.view.bindNotificationToggle(this.handleToggleNotif.bind(this));
-
-//   window.addEventListener("authChanged", () => this.render());
-//   this.render();
-//   }
-
-//   handleLogout() {
-//     this.model.removeToken();
-//     this.view.notifyAuthChanged();
-//     this.view.redirectToLogin();
-//   }
-
-//   render() {
-//     const isAuthenticated = this.model.isAuthenticated();
-//     this.view.render(isAuthenticated);
-//     this.view.bindLogout(this.handleLogout.bind(this));
-//     this.view.bindSkipLink();
-//   }
-
-//   handleToggleNotif() {
-//   if (!("Notification" in window)) {
-//     alert("Browser tidak mendukung notifikasi!");
-//     return;
-//   }
-
-//   if (!this.notifEnabled) {
-//     Notification.requestPermission().then(async (permission) => {
-//       if (permission === "granted") {
-//         this.notifEnabled = true;
-//         this.view.updateNotifButtonState(true);
-//         this.showNotification("Notifikasi diaktifkan!");
-
-//         const registration = await navigator.serviceWorker.ready;
-//         const subscription = await registration.pushManager.subscribe({
-//           userVisibleOnly: true,
-//           applicationServerKey: this.urlBase64ToUint8Array("BP3Th0X-Kuo_1GQcCohvudoE57rvmWxkMv8xGzbvp2ughW57hvPZirwCprPCPKXgKdMp9RXwVlu7QFmgqHwYMgo")
-//         });
-
-//         // await fetch("https://your-api-endpoint/subscribe", {
-//         //   method: "POST",
-//         //   body: JSON.stringify(subscription),
-//         //   headers: { "Content-Type": "application/json" }
-//         // });
-//       }
-//     });
-//   } else {
-//     this.notifEnabled = false;
-//     this.view.updateNotifButtonState(false);
-//     alert("Notifikasi dimatikan.");
-//   }
-// }
-// urlBase64ToUint8Array(base64String) {
-//   const padding = "=".repeat((4 - base64String.length % 4) % 4);
-//   const base64 = (base64String + padding)
-//     .replace(/-/g, "+")
-//     .replace(/_/g, "/");
-
-//   const rawData = atob(base64);
-//   const outputArray = new Uint8Array(rawData.length);
-
-//   for (let i = 0; i < rawData.length; ++i) {
-//     outputArray[i] = rawData.charCodeAt(i);
-//   }
-//   return outputArray;
-// }
-
-
-// showNotification(message) {
-//   navigator.serviceWorker.ready.then((registration) => {
-//     registration.showNotification("Dicoding Story", {
-//       body: message,
-//       icon: "/pwa-192x192.png",
-//      data: { url: `/` }
-
-//     });
-//   });
-// }
-// }
-
 import AuthModel from "../models/AuthModel.js";
 
 export class HeaderPresenter {
@@ -113,54 +24,74 @@ export class HeaderPresenter {
     this.view.bindNotificationToggle(this.handleToggleNotif.bind(this));
   }
 
-  handleToggleNotif() {
-    if (!("Notification" in window)) {
-      alert("Browser tidak mendukung notifikasi!");
+ async handleToggleNotif() {
+  if (!("Notification" in window)) {
+    alert("Browser tidak mendukung notifikasi!");
+    return;
+  }
+
+  if (!this.notifEnabled) {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      alert("Izin notifikasi ditolak.");
       return;
     }
 
-    if (!this.notifEnabled) {
-      Notification.requestPermission().then(async (permission) => {
-        if (permission === "granted") {
-          this.notifEnabled = true;
-          this.view.updateNotifButtonState(true);
-          this.showNotification("Notifikasi diaktifkan!");
+    this.notifEnabled = true;
+    this.view.updateNotifButtonState(true);
+    this.showNotification("Notifikasi diaktifkan!");
 
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: this.urlBase64ToUint8Array("BP3Th0X-Kuo_1GQcCohvudoE57rvmWxkMv8xGzbvp2ughW57hvPZirwCprPCPKXgKdMp9RXwVlu7QFmgqHwYMgo")
-          });
+    const registration = await navigator.serviceWorker.ready;
 
-          // Uncomment and ubah endpoint sesuai server kamu
-          // await fetch("https://your-api-endpoint/subscribe", {
-          //   method: "POST",
-          //   body: JSON.stringify(subscription),
-          //   headers: { "Content-Type": "application/json" }
-          // });
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: this.urlBase64ToUint8Array("BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk")
+    });
+
+    // Kirim data subscription ke API Dicoding
+    const token = this.model.getToken(); // Ambil token dari AuthModel
+    const { endpoint, keys } = subscription.toJSON();
+
+    await fetch("https://story-api.dicoding.dev/v1/notifications/subscribe", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        endpoint,
+        keys: {
+          p256dh: keys.p256dh,
+          auth: keys.auth
         }
+      })
+    });
+  } else {
+    // Unsubscribe jika sebelumnya aktif
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      const { endpoint } = subscription;
+      const token = this.model.getToken();
+
+      await fetch("https://story-api.dicoding.dev/v1/notifications/subscribe", {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ endpoint })
       });
-    } else {
-      this.notifEnabled = false;
-      this.view.updateNotifButtonState(false);
-      alert("Notifikasi dimatikan.");
+
+      await subscription.unsubscribe();
     }
+
+    this.notifEnabled = false;
+    this.view.updateNotifButtonState(false);
+    alert("Notifikasi dimatikan.");
   }
-
-  urlBase64ToUint8Array(base64String) {
-    const padding = "=".repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
-
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
+}
 
   showNotification(message) {
     navigator.serviceWorker.ready.then((registration) => {
