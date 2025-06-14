@@ -36,15 +36,19 @@ export default class StoryModel {
   }
 
   async getStoryById(id, token) {
-    try {
-      const response = await fetch(`https://story-api.dicoding.dev/v1/stories/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Gagal mengambil data detail");
-      return data.story;
-    } catch (error) {
-      throw new Error(error.message);
+  try {
+    const response = await fetch(`https://story-api.dicoding.dev/v1/stories/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.message || "Gagal mengambil data detail");
     }
+
+    return data.story;
+  } catch (error) {
+    throw new Error(error.message || "Gagal mengambil data detail");
   }
+}
 }

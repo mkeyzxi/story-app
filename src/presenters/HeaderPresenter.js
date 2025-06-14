@@ -1,4 +1,94 @@
+// import AuthModel from "../models/AuthModel.js";
+// import ApiService from "../services/ApiService.js";
+// export class HeaderPresenter {
+//   constructor(view) {
+//     this.view = view;
+//     this.model = new AuthModel();
+//     this.api = new ApiService();
+//     this.notifEnabled = false;
+
+//     window.addEventListener("authChanged", () => this.render());
+//     this.render();
+//   }
+
+//   handleLogout() {
+//     this.model.removeToken();
+//     this.view.notifyAuthChanged();
+//     this.view.redirectToLogin();
+//   }
+
+//   render() {
+//     const isAuthenticated = this.model.isAuthenticated();
+//     this.view.render(isAuthenticated);
+//     this.view.bindLogout(this.handleLogout.bind(this));
+//     this.view.bindSkipLink();
+//     this.view.bindNotificationToggle(this.handleToggleNotif.bind(this));
+//   }
+
+//   async handleToggleNotif() {
+//     if (!("Notification" in window)) {
+//       alert("Browser tidak mendukung notifikasi!");
+//       return;
+//     }
+
+//     if (!this.notifEnabled) {
+//       const permission = await Notification.requestPermission();
+//       if (permission !== "granted") {
+//         alert("Izin notifikasi ditolak.");
+//         return;
+//       }
+
+//       this.notifEnabled = true;
+//       this.view.updateNotifButtonState(true);
+//       this.showNotification("Notifikasi diaktifkan!");
+
+//       const registration = await navigator.serviceWorker.ready;
+
+//       const subscription = await registration.pushManager.subscribe({
+//         userVisibleOnly: true,
+//         applicationServerKey: this.urlBase64ToUint8Array("BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk")
+//       });
+
+//       // Kirim data subscription ke API Dicoding
+//       const token = this.model.getToken(); // Ambil token dari AuthModel
+//       const { endpoint, keys } = subscription.toJSON();
+
+//       await this.api.getSubscribed(token, endpoint, keys);
+//     } else {
+//       // Unsubscribe jika sebelumnya aktif
+//       const registration = await navigator.serviceWorker.ready;
+//       const subscription = await registration.pushManager.getSubscription();
+
+//       if (subscription) {
+//         const { endpoint } = subscription;
+//         const token = this.model.getToken();
+
+//         await this.api.getUnsubscribe(token, endpoint, subscription.toJSON().keys);
+
+//         await subscription.unsubscribe();
+//       }
+
+//       this.notifEnabled = false;
+//       this.view.updateNotifButtonState(false);
+//       alert("Notifikasi dimatikan.");
+//     }
+//   }
+
+//   showNotification(message) {
+//     navigator.serviceWorker.ready.then((registration) => {
+//       registration.showNotification("Dicoding Story", {
+//         body: message,
+//         icon: "/pwa-192x192.png",
+//         data: { url: "/" }
+//       });
+//     });
+//   }
+// }
+
+
+
 import AuthModel from "../models/AuthModel.js";
+import ApiService from "../services/ApiService.js";
 
 export class HeaderPresenter {
   constructor(view) {
@@ -24,82 +114,67 @@ export class HeaderPresenter {
     this.view.bindNotificationToggle(this.handleToggleNotif.bind(this));
   }
 
- async handleToggleNotif() {
-  if (!("Notification" in window)) {
-    alert("Browser tidak mendukung notifikasi!");
-    return;
-  }
+  async handleToggleNotif() {
+    if (!("Notification" in window)) {
+      alert("Browser tidak mendukung notifikasi!");
+      return;
+    }
 
-  if (!this.notifEnabled) {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
       alert("Izin notifikasi ditolak.");
       return;
     }
 
-    this.notifEnabled = true;
-    this.view.updateNotifButtonState(true);
-    this.showNotification("Notifikasi diaktifkan!");
-
     const registration = await navigator.serviceWorker.ready;
+    const token = this.model.getToken();
 
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: this.urlBase64ToUint8Array("BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk")
-    });
-
-    // Kirim data subscription ke API Dicoding
-    const token = this.model.getToken(); // Ambil token dari AuthModel
-    const { endpoint, keys } = subscription.toJSON();
-
-    await fetch("https://story-api.dicoding.dev/v1/notifications/subscribe", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        endpoint,
-        keys: {
-          p256dh: keys.p256dh,
-          auth: keys.auth
-        }
-      })
-    });
-  } else {
-    // Unsubscribe jika sebelumnya aktif
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-
-    if (subscription) {
-      const { endpoint } = subscription;
-      const token = this.model.getToken();
-
-      await fetch("https://story-api.dicoding.dev/v1/notifications/subscribe", {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ endpoint })
+    if (!this.notifEnabled) {
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(
+          "BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk"
+        ),
       });
 
-      await subscription.unsubscribe();
-    }
+      const { endpoint, keys } = subscription.toJSON();
+      await ApiService.getSubscribed(token, endpoint, keys);
 
-    this.notifEnabled = false;
-    this.view.updateNotifButtonState(false);
-    alert("Notifikasi dimatikan.");
+      this.notifEnabled = true;
+      this.view.updateNotifButtonState(true);
+      this.showNotification("Notifikasi diaktifkan!");
+    } else {
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        const { endpoint } = subscription;
+        await ApiService.getUnsubscribe(token, endpoint, subscription.toJSON().keys);
+        await subscription.unsubscribe();
+      }
+
+      this.notifEnabled = false;
+      this.view.updateNotifButtonState(false);
+      alert("Notifikasi dimatikan.");
+    }
   }
-}
 
   showNotification(message) {
     navigator.serviceWorker.ready.then((registration) => {
       registration.showNotification("Dicoding Story", {
         body: message,
         icon: "/pwa-192x192.png",
-        data: { url: "/" }
+        data: { url: "/" },
       });
     });
+  }
+
+  urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
   }
 }
