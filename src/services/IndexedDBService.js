@@ -1,38 +1,40 @@
+
+import { openDB } from 'idb';
+
 const DB_NAME = "StoryAppDB";
-const DB_VERSION = 1;
 const STORE_NAME = "stories";
+const DB_VERSION = 1;
 
-export function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onerror = () => reject("Gagal membuka DB");
-    request.onsuccess = () => resolve(request.result);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "id" });
-      }
-    };
-  });
+class IndexedDBService {
+  constructor() {
+    this._dbPromise = openDB(DB_NAME, DB_VERSION, {
+      upgrade(database) {
+        if (!database.objectStoreNames.contains(STORE_NAME)) {
+          database.createObjectStore(STORE_NAME, { keyPath: "id" });
+        }
+      },
+    });
+  }
+
+  async addStory(story) {
+    const db = await this._dbPromise;
+    return db.put(STORE_NAME, story);
+  }
+
+  async getAllStories() { 
+    const db = await this._dbPromise;
+    return db.getAll(STORE_NAME);
+  }
+
+  async getStoryById(id) {
+    const db = await this._dbPromise;
+    return db.get(STORE_NAME, id);
+  }
+
+  async deleteStory(id) {
+    const db = await this._dbPromise;
+    return db.delete(STORE_NAME, id);
+  }
 }
 
-export async function saveStoryOffline(story) {
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  tx.objectStore(STORE_NAME).put(story);
-}
-
-export async function getAllStoriesOffline() {
-  const db = await openDB();
-  return new Promise((resolve) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const req = tx.objectStore(STORE_NAME).getAll();
-    req.onsuccess = () => resolve(req.result);
-  });
-}
-
-export async function deleteStoryOffline(id) {
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  tx.objectStore(STORE_NAME).delete(id);
-}
+export default new IndexedDBService(); 

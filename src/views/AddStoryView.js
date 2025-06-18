@@ -6,8 +6,12 @@ export default class AddStoryView {
     this.presenter = new AddStoryPresenter(this);
     this.stream = null;
 
+    
+    this.elements = {};
+
+    
     window.addEventListener("hashchange", () => this.stopCamera());
-    this.render();
+    this.render(); 
   }
 
   render() {
@@ -23,49 +27,49 @@ export default class AddStoryView {
 
         <div>
           <label for="photo" class="block text-sm font-medium text-gray-700 mb-1">Gambar</label>
-          <input 
-            type="file" 
-            id="photo" 
-            accept="image/*" 
-            capture="environment" 
-            class="mb-2 bg-gray-500 text-white px-3 py-1 w-full" 
+          <input
+            type="file"
+            id="photo"
+            accept="image/*"
+            capture="environment"
+            class="mb-2 bg-gray-500 text-white px-3 py-1 w-full"
             aria-describedby="photoHelp"
-            aria-label="Upload atau ambil gambar cerita" 
+            aria-label="Upload atau ambil gambar cerita"
           />
           <div id="photoHelp" class="sr-only">Anda dapat memilih file gambar atau menggunakan kamera untuk mengambil foto.</div>
 
           <div class="flex gap-2">
-            <button 
-              type="button" 
-              id="openCameraBtn" 
-              class="bg-blue-500 text-white px-4 py-1 rounded" 
-              aria-controls="cameraContainer" 
+            <button
+              type="button"
+              id="openCameraBtn"
+              class="bg-blue-500 text-white px-4 py-1 rounded"
+              aria-controls="cameraContainer"
               aria-expanded="false"
               aria-label="Buka kamera untuk mengambil gambar"
             >Buka Kamera</button>
 
-            <button 
-              type="button" 
-              id="closeCameraBtn" 
-              class="bg-gray-500 text-white px-4 py-1 rounded hidden" 
+            <button
+              type="button"
+              id="closeCameraBtn"
+              class="bg-gray-500 text-white px-4 py-1 rounded hidden"
               aria-controls="cameraContainer"
               aria-expanded="true"
               aria-label="Tutup kamera"
             >Tutup Kamera</button>
           </div>
 
-          <div 
-            class="mt-2 hidden" 
-            id="cameraContainer" 
-            role="region" 
-            aria-live="polite" 
+          <div
+            class="mt-2 hidden"
+            id="cameraContainer"
+            role="region"
+            aria-live="polite"
             aria-label="Pratinjau kamera dan kontrol pengambilan gambar"
           >
             <video id="cameraPreview" autoplay playsinline class="w-full rounded object-contain" aria-label="Tampilan kamera"></video>
-            <button 
-              type="button" 
-              id="captureBtn" 
-              class="mt-2 bg-green-600 text-white px-4 py-1 rounded" 
+            <button
+              type="button"
+              id="captureBtn"
+              class="mt-2 bg-green-600 text-white px-4 py-1 rounded"
               aria-label="Ambil gambar dari kamera"
             >Ambil Gambar</button>
             <canvas id="cameraCanvas" class="hidden mt-2 w-full" aria-hidden="true"></canvas>
@@ -77,39 +81,54 @@ export default class AddStoryView {
           <div id="map" class="w-full h-64 rounded border border-gray-300" role="application" aria-label="Peta digital untuk memilih lokasi"></div>
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           class="w-full bg-blue-600 text-white py-2 rounded"
           aria-label="Kirim cerita"
         >Kirim</button>
       </form>
     `;
 
-    const openBtn = document.getElementById("openCameraBtn");
-    const closeBtn = document.getElementById("closeCameraBtn");
-    const cameraContainer = document.getElementById("cameraContainer");
+    
+    this.elements = {
+      description: this.container.querySelector("#description"),
+      photoInput: this.container.querySelector("#photo"),
+      openCameraBtn: this.container.querySelector("#openCameraBtn"),
+      closeCameraBtn: this.container.querySelector("#closeCameraBtn"),
+      cameraContainer: this.container.querySelector("#cameraContainer"),
+      cameraPreview: this.container.querySelector("#cameraPreview"),
+      captureBtn: this.container.querySelector("#captureBtn"),
+      cameraCanvas: this.container.querySelector("#cameraCanvas"),
+      storyForm: this.container.querySelector("#storyForm"),
+      map: this.container.querySelector("#map"), 
+    };
 
-    openBtn.addEventListener("click", () => this.openCamera());
-    closeBtn.addEventListener("click", () => this.stopCamera());
+    
+    this.elements.openCameraBtn.addEventListener("click", () => this.openCamera());
+    this.elements.closeCameraBtn.addEventListener("click", () => this.stopCamera());
 
-    document.querySelector("#storyForm").addEventListener("submit", (e) =>
+    this.elements.storyForm.addEventListener("submit", (e) =>
       this.presenter.handleFormSubmit(e),
     );
-    document.querySelector("#captureBtn").addEventListener("click", () =>
+    this.elements.captureBtn.addEventListener("click", () =>
       this.presenter.capturePhoto(),
     );
 
-    this.presenter.initMap();
+    this.presenter.initMap(); 
   }
 
   async openCamera() {
     try {
-      if (this.stream) return;
+      if (this.stream) return; 
+
+      
       this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
       this.setVideoStream(this.stream);
       this.showCameraUI();
     } catch (err) {
       this.showAlert("Gagal membuka kamera: " + err.message);
+      console.error("Error opening camera:", err);
+      this.stopCamera(); 
     }
   }
 
@@ -118,22 +137,31 @@ export default class AddStoryView {
       this.stream.getTracks().forEach((track) => track.stop());
       this.stream = null;
     }
+    
     this.hideCameraUI();
   }
 
   async getUserLocation() {
     return new Promise((resolve, reject) => {
+      if (!("geolocation" in navigator)) {
+        reject(new Error("Geolocation tidak didukung oleh browser ini."));
+        return;
+      }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-        (err) => reject(err),
+        (err) => {
+          console.warn("Gagal mendapatkan lokasi:", err);
+          reject(new Error("Gagal mendapatkan lokasi Anda. Izinkan akses lokasi atau pilih secara manual di peta."));
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 } 
       );
     });
   }
 
   getFormData() {
     return {
-      description: document.getElementById("description").value,
-      photo: document.getElementById("photo").files[0],
+      description: this.elements.description.value,
+      photo: this.elements.photoInput.files[0],
     };
   }
 
@@ -149,25 +177,61 @@ export default class AddStoryView {
     window.location.hash = "#/";
   }
 
+  
   showCameraUI() {
-    document.getElementById("cameraContainer").classList.remove("hidden");
-    document.getElementById("closeCameraBtn").classList.remove("hidden");
-    document.getElementById("openCameraBtn").setAttribute("aria-expanded", "true");
+    
+    if (this.elements.cameraContainer) {
+      this.elements.cameraContainer.classList.remove("hidden");
+      this.elements.cameraContainer.setAttribute("aria-expanded", "true");
+    }
+    if (this.elements.closeCameraBtn) {
+      this.elements.closeCameraBtn.classList.remove("hidden");
+    }
+    if (this.elements.openCameraBtn) {
+      this.elements.openCameraBtn.classList.add("hidden"); 
+      this.elements.openCameraBtn.setAttribute("aria-expanded", "true"); 
+    }
+    if (this.elements.cameraCanvas) { 
+      this.elements.cameraCanvas.classList.add("hidden");
+    }
   }
 
+  
   hideCameraUI() {
-    document.getElementById("cameraContainer").classList.add("hidden");
-    document.getElementById("closeCameraBtn").classList.add("hidden");
-    document.getElementById("openCameraBtn").setAttribute("aria-expanded", "false");
+    
+    if (this.elements.cameraContainer) {
+      this.elements.cameraContainer.classList.add("hidden");
+      this.elements.cameraContainer.setAttribute("aria-expanded", "false");
+    }
+    if (this.elements.closeCameraBtn) {
+      this.elements.closeCameraBtn.classList.add("hidden");
+    }
+    if (this.elements.openCameraBtn) {
+      this.elements.openCameraBtn.classList.remove("hidden"); 
+      this.elements.openCameraBtn.setAttribute("aria-expanded", "false"); 
+    }
+    
+    if (this.elements.cameraPreview && this.elements.cameraPreview.srcObject) {
+        this.elements.cameraPreview.srcObject.getTracks().forEach(track => track.stop());
+        this.elements.cameraPreview.srcObject = null;
+    }
   }
 
   setVideoStream(stream) {
-    document.getElementById("cameraPreview").srcObject = stream;
+    if (this.elements.cameraPreview) { 
+      this.elements.cameraPreview.srcObject = stream;
+    }
   }
 
   captureToCanvas() {
-    const video = document.getElementById("cameraPreview");
-    const canvas = document.getElementById("cameraCanvas");
+    const video = this.elements.cameraPreview;
+    const canvas = this.elements.cameraCanvas;
+
+    if (!video || !canvas) { 
+      console.error("Video or Canvas element not found for capture.");
+      return;
+    }
+
     const ctx = canvas.getContext("2d");
 
     const width = video.videoWidth;
@@ -177,12 +241,23 @@ export default class AddStoryView {
 
     ctx.drawImage(video, 0, 0, width, height);
     canvas.classList.remove("hidden");
+    video.classList.add("hidden"); 
   }
 
   canvasToBlob() {
-    return new Promise((resolve) => {
-      const canvas = document.getElementById("cameraCanvas");
-      canvas.toBlob((blob) => resolve(blob), "image/jpeg");
+    return new Promise((resolve, reject) => {
+      const canvas = this.elements.cameraCanvas;
+      if (!canvas) { 
+        reject(new Error("Canvas element not found for blob conversion."));
+        return;
+      }
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error("Failed to convert canvas to blob."));
+        }
+      }, "image/jpeg");
     });
   }
 }

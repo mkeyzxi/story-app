@@ -14,7 +14,8 @@ export default class AddStoryPresenter {
     const token = this.model.getToken();
     if (!token) {
       this.view.showAlert("Anda belum login!");
-      this.view.stopCamera(); // View yang tangani kamera
+      // view yang tangani kamera
+      this.view.stopCamera(); 
       this.view.redirectToLogin();
       return;
     }

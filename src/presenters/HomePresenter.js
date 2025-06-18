@@ -1,8 +1,7 @@
+
 import StoryModel from "../models/StoryModel.js";
-import {
-  getAllStoriesOffline,
-  saveStoryOffline,
-} from "../services/IndexedDBService.js";
+
+import IndexedDBService from "../services/IndexedDBService.js";
 
 export default class HomePresenter {
   constructor(view) {
@@ -15,7 +14,7 @@ export default class HomePresenter {
 
     if (!token) {
       console.warn("Token tidak ditemukan. Redirect ke login...");
-      window.location.hash = "#/login";
+      this.view.redirectToLogin();
       return;
     }
 
@@ -23,15 +22,20 @@ export default class HomePresenter {
       const { listStory } = await this.model.getAllStories(token);
       this.view.renderStories(listStory);
 
-      // Simpan ke IndexedDB satu per satu
-      for (const story of listStory) {
-        await saveStoryOffline(story);
-      }
+     
+     
+     
 
     } catch (error) {
       console.error("Gagal mengambil cerita dari API, coba load dari IndexedDB:", error);
-      const offlineStories = await getAllStoriesOffline();
-      this.view.renderStories(offlineStories);
+     
+      const offlineStories = await IndexedDBService.getAllStories();
+      if (offlineStories.length > 0) {
+        this.view.showAlert("Gagal terhubung ke server. Menampilkan cerita dari penyimpanan offline.");
+        this.view.renderStories(offlineStories);
+      } else {
+        this.view.showAlert("Gagal memuat cerita. Periksa koneksi internet Anda atau coba lagi nanti.");
+      }
     }
   }
 }
