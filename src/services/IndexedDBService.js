@@ -1,5 +1,4 @@
-
-import { openDB } from 'idb';
+import { openDB } from "idb";
 
 const DB_NAME = "StoryAppDB";
 const STORE_NAME = "stories";
@@ -21,7 +20,7 @@ class IndexedDBService {
     return db.put(STORE_NAME, story);
   }
 
-  async getAllStories() { 
+  async getAllStories() {
     const db = await this._dbPromise;
     return db.getAll(STORE_NAME);
   }
@@ -37,4 +36,4 @@ class IndexedDBService {
   }
 }
 
-export default new IndexedDBService(); 
+export default new IndexedDBService();

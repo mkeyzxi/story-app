@@ -6,12 +6,10 @@ export default class AddStoryView {
     this.presenter = new AddStoryPresenter(this);
     this.stream = null;
 
-    
     this.elements = {};
 
-    
     window.addEventListener("hashchange", () => this.stopCamera());
-    this.render(); 
+    this.render();
   }
 
   render() {
@@ -89,7 +87,6 @@ export default class AddStoryView {
       </form>
     `;
 
-    
     this.elements = {
       description: this.container.querySelector("#description"),
       photoInput: this.container.querySelector("#photo"),
@@ -100,12 +97,15 @@ export default class AddStoryView {
       captureBtn: this.container.querySelector("#captureBtn"),
       cameraCanvas: this.container.querySelector("#cameraCanvas"),
       storyForm: this.container.querySelector("#storyForm"),
-      map: this.container.querySelector("#map"), 
+      map: this.container.querySelector("#map"),
     };
 
-    
-    this.elements.openCameraBtn.addEventListener("click", () => this.openCamera());
-    this.elements.closeCameraBtn.addEventListener("click", () => this.stopCamera());
+    this.elements.openCameraBtn.addEventListener("click", () =>
+      this.openCamera(),
+    );
+    this.elements.closeCameraBtn.addEventListener("click", () =>
+      this.stopCamera(),
+    );
 
     this.elements.storyForm.addEventListener("submit", (e) =>
       this.presenter.handleFormSubmit(e),
@@ -114,21 +114,20 @@ export default class AddStoryView {
       this.presenter.capturePhoto(),
     );
 
-    this.presenter.initMap(); 
+    this.presenter.initMap();
   }
 
   async openCamera() {
     try {
-      if (this.stream) return; 
+      if (this.stream) return;
 
-      
       this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
       this.setVideoStream(this.stream);
       this.showCameraUI();
     } catch (err) {
       this.showAlert("Gagal membuka kamera: " + err.message);
       console.error("Error opening camera:", err);
-      this.stopCamera(); 
+      this.stopCamera();
     }
   }
 
@@ -137,7 +136,7 @@ export default class AddStoryView {
       this.stream.getTracks().forEach((track) => track.stop());
       this.stream = null;
     }
-    
+
     this.hideCameraUI();
   }
 
@@ -148,12 +147,17 @@ export default class AddStoryView {
         return;
       }
       navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        (pos) =>
+          resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
         (err) => {
           console.warn("Gagal mendapatkan lokasi:", err);
-          reject(new Error("Gagal mendapatkan lokasi Anda. Izinkan akses lokasi atau pilih secara manual di peta."));
+          reject(
+            new Error(
+              "Gagal mendapatkan lokasi Anda. Izinkan akses lokasi atau pilih secara manual di peta.",
+            ),
+          );
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 } 
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
       );
     });
   }
@@ -177,9 +181,7 @@ export default class AddStoryView {
     window.location.hash = "#/";
   }
 
-  
   showCameraUI() {
-    
     if (this.elements.cameraContainer) {
       this.elements.cameraContainer.classList.remove("hidden");
       this.elements.cameraContainer.setAttribute("aria-expanded", "true");
@@ -188,17 +190,15 @@ export default class AddStoryView {
       this.elements.closeCameraBtn.classList.remove("hidden");
     }
     if (this.elements.openCameraBtn) {
-      this.elements.openCameraBtn.classList.add("hidden"); 
-      this.elements.openCameraBtn.setAttribute("aria-expanded", "true"); 
+      this.elements.openCameraBtn.classList.add("hidden");
+      this.elements.openCameraBtn.setAttribute("aria-expanded", "true");
     }
-    if (this.elements.cameraCanvas) { 
+    if (this.elements.cameraCanvas) {
       this.elements.cameraCanvas.classList.add("hidden");
     }
   }
 
-  
   hideCameraUI() {
-    
     if (this.elements.cameraContainer) {
       this.elements.cameraContainer.classList.add("hidden");
       this.elements.cameraContainer.setAttribute("aria-expanded", "false");
@@ -207,18 +207,20 @@ export default class AddStoryView {
       this.elements.closeCameraBtn.classList.add("hidden");
     }
     if (this.elements.openCameraBtn) {
-      this.elements.openCameraBtn.classList.remove("hidden"); 
-      this.elements.openCameraBtn.setAttribute("aria-expanded", "false"); 
+      this.elements.openCameraBtn.classList.remove("hidden");
+      this.elements.openCameraBtn.setAttribute("aria-expanded", "false");
     }
-    
+
     if (this.elements.cameraPreview && this.elements.cameraPreview.srcObject) {
-        this.elements.cameraPreview.srcObject.getTracks().forEach(track => track.stop());
-        this.elements.cameraPreview.srcObject = null;
+      this.elements.cameraPreview.srcObject
+        .getTracks()
+        .forEach((track) => track.stop());
+      this.elements.cameraPreview.srcObject = null;
     }
   }
 
   setVideoStream(stream) {
-    if (this.elements.cameraPreview) { 
+    if (this.elements.cameraPreview) {
       this.elements.cameraPreview.srcObject = stream;
     }
   }
@@ -227,7 +229,7 @@ export default class AddStoryView {
     const video = this.elements.cameraPreview;
     const canvas = this.elements.cameraCanvas;
 
-    if (!video || !canvas) { 
+    if (!video || !canvas) {
       console.error("Video or Canvas element not found for capture.");
       return;
     }
@@ -241,13 +243,13 @@ export default class AddStoryView {
 
     ctx.drawImage(video, 0, 0, width, height);
     canvas.classList.remove("hidden");
-    video.classList.add("hidden"); 
+    video.classList.add("hidden");
   }
 
   canvasToBlob() {
     return new Promise((resolve, reject) => {
       const canvas = this.elements.cameraCanvas;
-      if (!canvas) { 
+      if (!canvas) {
         reject(new Error("Canvas element not found for blob conversion."));
         return;
       }

@@ -1,4 +1,4 @@
-import './style.css';
+import "./style.css";
 import Router from "./router/Router.js";
 import "./components/Header.js";
 import "./components/Footer.js";
@@ -9,15 +9,15 @@ document.addEventListener("DOMContentLoaded", () => {
   new Router(document.querySelector("#app"));
 });
 
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        console.log('Service Worker registered:', reg.scope);
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => {
+        console.log("Service Worker registered:", reg.scope);
       })
-      .catch(err => {
-        console.error('Service Worker registration failed:', err);
+      .catch((err) => {
+        console.error("Service Worker registration failed:", err);
       });
   });
 }

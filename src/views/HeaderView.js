@@ -81,7 +81,9 @@ export class HeaderView {
   updateNotifButtonState(isEnabled) {
     const btn = this.root.querySelector("#toggleNotifBtn");
     if (btn) {
-      btn.textContent = isEnabled ? "Nonaktifkan Notifikasi" : "Aktifkan Notifikasi";
+      btn.textContent = isEnabled
+        ? "Nonaktifkan Notifikasi"
+        : "Aktifkan Notifikasi";
     }
   }
 }

@@ -2,7 +2,7 @@ export default class DetailView {
   constructor(container, onRedirect) {
     this.container = container;
     // fungsi callback
-    this.onRedirect = onRedirect; 
+    this.onRedirect = onRedirect;
   }
 
   triggerRedirect() {

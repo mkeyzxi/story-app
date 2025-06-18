@@ -15,7 +15,7 @@ export default class AddStoryPresenter {
     if (!token) {
       this.view.showAlert("Anda belum login!");
       // view yang tangani kamera
-      this.view.stopCamera(); 
+      this.view.stopCamera();
       this.view.redirectToLogin();
       return;
     }

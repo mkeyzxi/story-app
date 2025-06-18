@@ -1,4 +1,3 @@
-
 class StoryItem extends HTMLElement {
   constructor() {
     super();
@@ -6,17 +5,16 @@ class StoryItem extends HTMLElement {
     this._onSaveCallback = null;
   }
 
-  
   setStory(story, onSaveCallback) {
     this._story = story;
     this._onSaveCallback = onSaveCallback;
     this.render();
-    this._addEventListeners(); 
+    this._addEventListeners();
   }
 
   render() {
     if (!this._story) {
-      this.innerHTML = '<p>Story data is missing.</p>';
+      this.innerHTML = "<p>Story data is missing.</p>";
       return;
     }
 
@@ -32,16 +30,16 @@ class StoryItem extends HTMLElement {
         </div>
       </article>
     `;
-    this._updateButtonState(); 
+    this._updateButtonState();
   }
 
   _addEventListeners() {
-    const saveButton = this.querySelector('.save-story-btn');
-    const cardContainer = this.querySelector('.story-card-container'); 
+    const saveButton = this.querySelector(".save-story-btn");
+    const cardContainer = this.querySelector(".story-card-container");
 
     if (saveButton) {
-      saveButton.addEventListener('click', async (event) => {
-        event.stopPropagation(); 
+      saveButton.addEventListener("click", async (event) => {
+        event.stopPropagation();
         if (this._onSaveCallback) {
           await this._onSaveCallback(this._story);
           alert(`Story "${this._story.name}" berhasil disimpan!`);
@@ -50,40 +48,39 @@ class StoryItem extends HTMLElement {
       });
     }
 
-    
     if (cardContainer) {
-      cardContainer.addEventListener('click', () => {
+      cardContainer.addEventListener("click", () => {
         window.location.hash = `#/detail/${this._story.id}`;
       });
-      
-      cardContainer.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
+
+      cardContainer.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
           window.location.hash = `#/detail/${this._story.id}`;
         }
       });
     }
   }
 
-  
   async _updateButtonState() {
-    const IndexedDBService = (await import('../services/IndexedDBService.js')).default;
+    const IndexedDBService = (await import("../services/IndexedDBService.js"))
+      .default;
     const savedStory = await IndexedDBService.getStoryById(this._story.id);
-    const saveButton = this.querySelector('.save-story-btn');
+    const saveButton = this.querySelector(".save-story-btn");
 
     if (saveButton) {
       if (savedStory) {
-        saveButton.textContent = 'Tersimpan';
+        saveButton.textContent = "Tersimpan";
         saveButton.disabled = true;
-        saveButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-        saveButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+        saveButton.classList.remove("bg-blue-500", "hover:bg-blue-600");
+        saveButton.classList.add("bg-gray-400", "cursor-not-allowed");
       } else {
-        saveButton.textContent = 'Simpan Story';
+        saveButton.textContent = "Simpan Story";
         saveButton.disabled = false;
-        saveButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
-        saveButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        saveButton.classList.add("bg-blue-500", "hover:bg-blue-600");
+        saveButton.classList.remove("bg-gray-400", "cursor-not-allowed");
       }
     }
   }
 }
 
-customElements.define('story-item', StoryItem);
+customElements.define("story-item", StoryItem);

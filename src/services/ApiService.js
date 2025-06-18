@@ -37,7 +37,7 @@ export default class ApiService {
     return this.request("/stories", "POST", formData, token, true);
   }
 
-   static getSubscribed(token, endpoint, keys) {
+  static getSubscribed(token, endpoint, keys) {
     return fetch(`${this.baseUrl}/notifications/subscribe`, {
       method: "POST",
       headers: {
@@ -65,5 +65,3 @@ export default class ApiService {
     });
   }
 }
-
-
