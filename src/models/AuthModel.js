@@ -24,4 +24,4 @@ export default class AuthModel {
   isAuthenticated() {
     return !!this.getToken();
   }
-}
+} 
