@@ -1,2 +1,1 @@
-https://mbul-story.vercel.app/
-https://mbul-story.netlify.app/
+https://story-mbul.netlify.app/

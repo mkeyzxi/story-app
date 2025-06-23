@@ -24,9 +24,14 @@ class StoryItem extends HTMLElement {
         <div class="story-info">
         <p class="text-sm text-gray-600 mb-3">${this._story.description}</p>
         <h2 class="font-semibold text-lg text-gray-800 mb-1">${this._story.name}</h2>
-          <button class="save-story-btn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-            Simpan Story
-          </button>
+          <div class="story-actions flex gap-2">
+  <button class="save-story-btn bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+    Simpan Story
+  </button>
+  <button class="delete-story-btn bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 hidden">
+    Hapus Story
+  </button>
+</div>
         </div>
       </article>
     `;
@@ -59,6 +64,18 @@ class StoryItem extends HTMLElement {
         }
       });
     }
+
+    const deleteButton = this.querySelector(".delete-story-btn");
+if (deleteButton) {
+  deleteButton.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    const IndexedDBService = (await import("../services/IndexedDBService.js")).default;
+    await IndexedDBService.deleteStory(this._story.id);
+    alert(`Story "${this._story.name}" berhasil dihapus dari penyimpanan lokal.`);
+    this._updateButtonState();
+  });
+}
+
   }
 
   async _updateButtonState() {
@@ -80,6 +97,16 @@ class StoryItem extends HTMLElement {
         saveButton.classList.remove("bg-gray-400", "cursor-not-allowed");
       }
     }
+    const deleteButton = this.querySelector(".delete-story-btn");
+
+if (deleteButton) {
+  if (savedStory) {
+    deleteButton.classList.remove("hidden");
+  } else {
+    deleteButton.classList.add("hidden");
+  }
+}
+
   }
 }
 
